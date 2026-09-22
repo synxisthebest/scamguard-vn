@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping Server Health Endpoint
         run: |
-          TARGET_URL="${{ secrets.LIVE_APP_URL }}"
+          TARGET_URL="${{ secrets.LIVE_APP_URL || vars.LIVE_APP_URL }}"
           if [ -z "$TARGET_URL" ]; then
             echo "⚠️ [Notice] Secret LIVE_APP_URL is not set yet in GitHub Settings > Secrets and variables > Actions."
             echo "Please set LIVE_APP_URL to your deployed URL (e.g. https://scamguard-vn.onrender.com) to activate auto-ping."
