@@ -1,0 +1,29 @@
+name: Keep Alive Cronjob
+
+on:
+  schedule:
+    # Runs every 14 minutes to prevent free tier servers (e.g. Render, Koyeb) from sleeping
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+
+jobs:
+  ping-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Server Health Endpoint
+        run: |
+          TARGET_URL="${{ secrets.LIVE_APP_URL }}"
+          if [ -z "$TARGET_URL" ]; then
+            echo "⚠️ [Notice] Secret LIVE_APP_URL is not set yet in GitHub Settings > Secrets and variables > Actions."
+            echo "Please set LIVE_APP_URL to your deployed URL (e.g. https://scamguard-vn.onrender.com) to activate auto-ping."
+            exit 0
+          fi
+          echo "Pinging $TARGET_URL/health ..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL/health" || echo "000")
+          echo "Response code: $STATUS_CODE"
+          if [ "$STATUS_CODE" -ge 200 ] && [ "$STATUS_CODE" -lt 400 ]; then
+            echo "✅ Server is alive and responsive!"
+          else
+            echo "⚠️ Non-2xx response ($STATUS_CODE), retrying root URL..."
+            curl -I -s "$TARGET_URL" || true
+          fi
