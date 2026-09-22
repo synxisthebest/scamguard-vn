@@ -1,4 +1,4 @@
-import { CommunitySurveySubmission } from '../src/types';
+import { CommunitySurveySubmission } from '../types';
 
 export const REAL_EXTERNAL_SURVEYS: CommunitySurveySubmission[] = [
   {
