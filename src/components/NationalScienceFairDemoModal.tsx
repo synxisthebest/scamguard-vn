@@ -48,7 +48,6 @@ interface NationalScienceFairDemoModalProps {
   onClose: () => void;
   onNavigateToResearch?: () => void;
   onNavigateToMainUI?: () => void;
-  onSubmitted?: () => void;
 }
 
 const VIETNAM_PROVINCES = [
@@ -484,7 +483,6 @@ export const NationalScienceFairDemoModal: React.FC<NationalScienceFairDemoModal
   onClose,
   onNavigateToResearch,
   onNavigateToMainUI,
-  onSubmitted,
 }) => {
   const [surveyStep, setSurveyStep] = useState<1 | 2 | 3>(1);
   const [submitting, setSubmitting] = useState(false);
@@ -738,10 +736,6 @@ export const NationalScienceFairDemoModal: React.FC<NationalScienceFairDemoModal
         spread: 90,
         origin: { y: 0.6 },
       });
-
-      if (onSubmitted) {
-        onSubmitted();
-      }
     } catch (err) {
       console.error('Survey submission error:', err);
       try {

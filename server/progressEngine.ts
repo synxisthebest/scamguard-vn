@@ -16,6 +16,7 @@ import {
   getAllParticipantTrials,
   getAllCommunitySurveys,
 } from './scientificEngine';
+import { persistProgress } from './db';
 
 export interface UserProgressData {
   userId: string;
@@ -128,6 +129,7 @@ export function recordProgressEvent(userId: string, eventType: string, details?:
     progress.lastActiveDate = today;
   }
 
+  persistProgress(progress);
   return progress;
 }
 
@@ -738,4 +740,16 @@ export function exportUserData(userId: string) {
     scamDefenseProfile: dna,
     eventLogs: progress.events,
   };
+}
+
+export function populateProgressFromDb(records: UserProgressData[]) {
+  for (const item of records) {
+    if (item.userId) {
+      userProgressStore.set(item.userId, item);
+    }
+  }
+}
+
+export function getAllProgressForDb(): UserProgressData[] {
+  return Array.from(userProgressStore.values());
 }

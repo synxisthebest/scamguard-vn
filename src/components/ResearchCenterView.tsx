@@ -45,7 +45,6 @@ import { VisefPosterBoardVisualizer } from './VisefPosterBoardVisualizer';
 import { VisefStatisticalCalculator } from './VisefStatisticalCalculator';
 import mlBenchmarkGraphImg from '../assets/images/ml_benchmark_graph_1789781188342.jpg';
 import { VisefSurveyResponsesLiveTable } from './VisefSurveyResponsesLiveTable';
-import { REAL_EXTERNAL_SURVEYS } from '../data/realSurveyData';
 import {
   MachineLearningBenchmarkModel,
   ErrorTaxonomyItem,
@@ -425,10 +424,8 @@ export const ResearchCenterView: React.FC<ResearchCenterViewProps> = ({ onNaviga
       if (errData) {
         setErrorTaxonomy(errData.items || []);
       }
-      if (sData && typeof sData.total === 'number' && sData.total > 0) {
+      if (sData && typeof sData.total === 'number') {
         setLiveSurveyCount(sData.total);
-      } else {
-        setLiveSurveyCount(70 + REAL_EXTERNAL_SURVEYS.length);
       }
     } catch (e) {
       console.warn('Gracefully handled research data load exception', e);

@@ -32,7 +32,6 @@ import {
   Pause,
 } from 'lucide-react';
 import { CommunitySurveySubmission, SurveyDemographicGroup } from '../types';
-import { REAL_EXTERNAL_SURVEYS } from '../data/realSurveyData';
 
 interface VisefSurveyResponsesLiveTableProps {
   surveys?: CommunitySurveySubmission[];
@@ -114,9 +113,7 @@ export const VisefSurveyResponsesLiveTable: React.FC<VisefSurveyResponsesLiveTab
   isLoading: propLoading,
   onOpenSurvey,
 }) => {
-  const [internalSurveys, setInternalSurveys] = useState<CommunitySurveySubmission[]>(
-    propSurveys && propSurveys.length > 0 ? propSurveys : REAL_EXTERNAL_SURVEYS
-  );
+  const [internalSurveys, setInternalSurveys] = useState<CommunitySurveySubmission[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [identityFilter, setIdentityFilter] = useState<'ALL' | 'ANONYMOUS' | 'REAL_NAME'>('ALL');
@@ -145,20 +142,16 @@ export const VisefSurveyResponsesLiveTable: React.FC<VisefSurveyResponsesLiveTab
   const fetchSurveys = useCallback(async (isSilent = false) => {
     try {
       if (!isSilent) setLoading(true);
-      const res = await fetch('/api/research/surveys').catch(() => null);
-      if (res && res.ok) {
+      const res = await fetch('/api/research/surveys');
+      if (res.ok) {
         const data = await res.json();
-        if (data?.surveys && Array.isArray(data.surveys) && data.surveys.length > 0) {
+        if (data?.surveys && Array.isArray(data.surveys)) {
           setInternalSurveys(data.surveys);
           setLastSyncTime(new Date());
-          return;
         }
       }
-      // Fallback to offline / bundled authentic ViSEF survey dataset (all 70 samples)
-      setInternalSurveys((prev) => (prev && prev.length > 0 ? prev : REAL_EXTERNAL_SURVEYS));
     } catch (err) {
       console.warn('Silent live sync notice: survey polling temporarily waiting');
-      setInternalSurveys((prev) => (prev && prev.length > 0 ? prev : REAL_EXTERNAL_SURVEYS));
     } finally {
       if (!isSilent) setLoading(false);
     }
@@ -170,7 +163,7 @@ export const VisefSurveyResponsesLiveTable: React.FC<VisefSurveyResponsesLiveTab
   }, [fetchSurveys]);
 
   useEffect(() => {
-    if (propSurveys && propSurveys.length > 0) {
+    if (propSurveys && propSurveys.length >= 100) {
       setInternalSurveys(propSurveys);
     }
   }, [propSurveys]);

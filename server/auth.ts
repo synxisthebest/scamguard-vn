@@ -1,5 +1,6 @@
 import { UserAccount, UserProfile, ExperienceMode, TrustedContact } from '../src/types';
 import crypto from 'crypto';
+import { persistUser } from './db';
 
 // In-memory user database
 const usersStore = new Map<string, {
@@ -245,10 +246,12 @@ export function registerUser(params: {
     createdAt: new Date().toISOString(),
   };
 
-  usersStore.set(userId, {
+  const newEntry = {
     account,
     passwordHash: params.password ? hashPassword(params.password) : undefined,
-  });
+  };
+  usersStore.set(userId, newEntry);
+  persistUser(newEntry);
 
   return { success: true, user: account };
 }
@@ -435,7 +438,9 @@ export function syncFirebaseUser(params: {
     createdAt: profile.createdAt,
   };
 
-  usersStore.set(userId, { account });
+  const entryToSave = { account };
+  usersStore.set(userId, entryToSave);
+  persistUser(entryToSave);
   return account;
 }
 
@@ -488,6 +493,8 @@ export function updateUserProfile(userId: string, updates: Partial<UserProfile>)
   if (updates.avatarUrl) {
     entry.account.avatarUrl = updates.avatarUrl;
   }
+
+  persistUser(entry);
 
   return entry.account;
 }
@@ -542,4 +549,19 @@ export function getPresetDemoUsers() {
       streak: entry ? entry.account.profile.streakDays || preset.streak : preset.streak,
     };
   });
+}
+
+export function populateUsersFromDb(users: Array<{ account: UserAccount; passwordHash?: string }>) {
+  for (const item of users) {
+    if (item.account && item.account.id) {
+      usersStore.set(item.account.id, item);
+      if (item.account.token) {
+        sessionsStore.set(item.account.token, item.account.id);
+      }
+    }
+  }
+}
+
+export function getAllUsersForDb() {
+  return Array.from(usersStore.values());
 }

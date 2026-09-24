@@ -54,6 +54,8 @@ import {
   updateUserProfile,
   getPresetDemoUsers,
   resetUserAccountData,
+  populateUsersFromDb,
+  getAllUsersForDb,
 } from './server/auth';
 import {
   createRateLimiter,
@@ -80,17 +82,29 @@ import {
   deleteUserData,
   exportUserData,
   resetAllUserProgress,
+  populateProgressFromDb,
+  getAllProgressForDb,
 } from './server/progressEngine';
+import { initDatabase, isDbConnected, syncUsersWithDb, syncProgressWithDb } from './server/db';
 
 dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const PORT = process.env.PORT || 3000;
 
-  // Liveness / Healthcheck probe endpoint for hosting platforms and cronjob keep-alive
+  // Initialize MongoDB Atlas connection and sync persistent data
+  await initDatabase();
+  await syncUsersWithDb(populateUsersFromDb, getAllUsersForDb);
+  await syncProgressWithDb(populateProgressFromDb, getAllProgressForDb);
+
+  // Health check endpoint for Render / monitoring
   app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
+    res.status(200).json({
+      status: 'ok',
+      uptime: process.uptime(),
+      database: isDbConnected() ? 'mongodb_atlas_connected' : 'in_memory_fallback',
+    });
   });
 
   // Security Headers using Helmet (with frame config compatible for iFrame preview)

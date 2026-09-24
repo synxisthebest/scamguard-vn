@@ -42,7 +42,7 @@ import {
 import { PreAppVulnerabilityGraph } from './PreAppVulnerabilityGraph';
 import { PersonalVsCommunityComparisonSuite } from './PersonalVsCommunityComparisonSuite';
 import { SurveyDemographicsSection } from './SurveyDemographicsSection';
-import { NationalScienceFairDemoModal, SCENARIO_QUESTIONS } from './NationalScienceFairDemoModal';
+import { SCENARIO_QUESTIONS } from './NationalScienceFairDemoModal';
 import { VisefSurveyResponsesLiveTable } from './VisefSurveyResponsesLiveTable';
 import { PostAppCertificationLiveSection } from './PostAppCertificationLiveSection';
 import { PrePostIndividualAndCommunityComparisonSection } from './PrePostIndividualAndCommunityComparisonSection';
@@ -993,20 +993,387 @@ export const ViSEFSurveyAnalyticsSuite: React.FC<ViSEFSurveyAnalyticsSuiteProps>
         </button>
       </div>
 
-      {/* FULL VISEF 2026 RESEARCH SURVEY MODAL (24 QUESTIONS: 12 PHẦN 1 + 12 PHẦN 2) */}
-      <NationalScienceFairDemoModal
-        isOpen={isSurveyModalOpen}
-        onClose={() => setIsSurveyModalOpen(false)}
-        onNavigateToResearch={() => {
-          setIsSurveyModalOpen(false);
-          setActiveTab('CHARTS');
-          const container = document.getElementById('visef-survey-analytics-container');
-          if (container) container.scrollIntoView({ behavior: 'smooth' });
-        }}
-        onSubmitted={() => {
-          fetchAnalytics(false);
-        }}
-      />
+      {/* MODAL: LIVE GOOGLE FORM SURVEY & FAST DIAGNOSTIC */}
+      <AnimatePresence>
+        {isSurveyModalOpen && (
+          <div className="fixed inset-0 z-50 grid place-items-center p-3 sm:p-5 bg-black/85 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              className="relative w-full max-w-2xl bg-slate-900 border border-purple-500/40 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+            >
+              {/* Google Form Top Decorative Strip */}
+              <div className="h-3 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 w-full" />
+
+              {recentPersonalResult ? (
+                /* Google Form Confirmation Screen */
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 p-6 text-white text-center space-y-3">
+                    <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto border border-emerald-400/50 shadow-lg">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-300" />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-tight">Câu trả lời của bạn đã được ghi nhận!</h3>
+                    <p className="text-xs text-purple-100 max-w-lg mx-auto leading-relaxed">
+                      Dữ liệu khảo sát đã được tự động đẩy lên <strong>Biểu đồ Thống kê Tổng hợp Cả nước (N={analytics?.totalRespondents ?? 0}+)</strong>, trở thành bằng chứng thực nghiệm quan trọng cho đề tài ViSEF 2026.
+                    </p>
+                  </div>
+
+                  <div className="p-6 space-y-5">
+                    <div className="p-4 rounded-xl bg-slate-950 border border-purple-500/30 space-y-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Khảo nghiệm viên:</span>
+                        <span className="text-purple-300 font-bold">{recentPersonalResult.participantName} ({recentPersonalResult.demographicGroup})</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400 font-medium">Thời gian đồng bộ dữ liệu:</span>
+                        <span className="text-emerald-400 font-mono">{new Date().toLocaleTimeString('vi-VN')} — Realtime Sync</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Điểm Phòng Thủ Ban Đầu (Pre)</p>
+                        <p className="text-2xl font-bold text-rose-400 mt-1">{recentPersonalResult.testOutcome.preScore}/100đ</p>
+                        <p className="text-[10px] text-rose-300/80 mt-1">Lỗ hổng hành vi trước khi dùng app</p>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Dự Kiến Sau Can Thiệp (Post)</p>
+                        <p className="text-2xl font-bold text-emerald-400 mt-1">{recentPersonalResult.testOutcome.postScore}/100đ</p>
+                        <p className="text-[10px] text-emerald-300/80 mt-1">Mức phản xạ an toàn kỳ vọng</p>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+                        <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Đóng Góp ViSEF</p>
+                        <p className="text-2xl font-bold text-cyan-300 mt-1">
+                          +{recentPersonalResult.testOutcome.postScore - recentPersonalResult.testOutcome.preScore}đ
+                        </p>
+                        <p className="text-[10px] text-cyan-300/80 mt-1">Đã cộng vào mẫu nghiên cứu</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRecentPersonalResult(null);
+                          setSurveyStep(1);
+                        }}
+                        className="w-full sm:w-auto text-xs text-purple-400 hover:text-purple-300 underline font-medium cursor-pointer"
+                      >
+                        📝 Gửi một câu trả lời khác
+                      </button>
+
+                      <button
+                        id="btn-dismiss-survey-success"
+                        onClick={() => {
+                          setIsSurveyModalOpen(false);
+                          setActiveTab('CHARTS');
+                          // Smooth scroll to container
+                          const container = document.getElementById('visef-survey-analytics-container');
+                          if (container) container.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/20 cursor-pointer"
+                      >
+                        <BarChart3 className="w-4 h-4" />
+                        Xem Biểu Đồ Thống Kê Đã Cập Nhật (Live ViSEF Charts)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Google Form Interface */
+                <div className="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1">
+                  {/* Form Header Card */}
+                  <div className="bg-slate-950 border-l-4 border-l-indigo-600 border border-slate-800 p-5 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-indigo-400 font-semibold text-xs tracking-wide uppercase">
+                        <span className="px-2 py-0.5 rounded bg-indigo-500/20 border border-indigo-400/30 text-indigo-300">
+                          Google Forms Format
+                        </span>
+                        <span>• Đề tài Nghiên cứu ViSEF 2026</span>
+                      </div>
+                      <button
+                        id="btn-close-survey-modal"
+                        onClick={() => setIsSurveyModalOpen(false)}
+                        className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-white leading-snug">
+                      PHIẾU KHẢO SÁT HÀNH VI & NGUY CƠ LỪA ĐẢO SỐ (CHƯA DÙNG APP SCAMGUARD VN)
+                    </h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Khảo sát này thu thập dữ liệu hiện trạng độc lập từ người tham gia <strong>trước khi sử dụng ứng dụng</strong>. 
+                      Mọi câu trả lời của bạn sẽ được tự động tổng hợp vào <strong>Biểu đồ Thống kê Suy luận Quốc gia</strong> để làm bằng chứng thực nghiệm phục vụ Cuộc thi ViSEF.
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
+                      <span className="text-rose-400 font-medium">* Bắt buộc</span>
+                      <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-cyan-400 font-mono flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                        Live Sync Engine: N={analytics?.totalRespondents ?? 0} phản hồi trên hệ thống
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Form Step Indicator Bar */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs font-semibold text-indigo-300">
+                      <span>Mục {surveyStep} / 2: {surveyStep === 1 ? 'Phần 1: Khảo Sát Kinh Nghiệm Thực Tế & Nhân Khẩu Học' : 'Phần 2: 12 Bài Tập Tình Huống Ứng Biến (ViSEF 2026)'}</span>
+                      <span className="text-cyan-400">Trang {surveyStep} của 2</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 transition-all duration-300"
+                        style={{ width: surveyStep === 1 ? '50%' : '100%' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Form Form Content */}
+                  <form onSubmit={handleSurveySubmit} className="space-y-5 text-xs max-h-[58vh] overflow-y-auto pr-1">
+                    {surveyStep === 1 ? (
+                      /* STEP 1: DEMOGRAPHICS & HABITS (SPACIOUS DIMENSIONS + SPECIAL CONFIDENCE HERO) */
+                      <div className="space-y-6">
+                        <SurveyDemographicsSection
+                          participantName={surveyForm.participantName}
+                          onParticipantNameChange={(val) => setSurveyForm((prev) => ({ ...prev, participantName: val }))}
+                          isAnonymous={surveyForm.isAnonymous}
+                          onIsAnonymousChange={(val) => setSurveyForm((prev) => ({ ...prev, isAnonymous: val }))}
+                          anonymousCode={surveyForm.anonymousCode}
+                          onAnonymousCodeChange={(val) => setSurveyForm((prev) => ({ ...prev, anonymousCode: val }))}
+                          schoolName={surveyForm.schoolName}
+                          onSchoolNameChange={(val) => setSurveyForm((prev) => ({ ...prev, schoolName: val }))}
+                          className={surveyForm.className}
+                          onClassNameChange={(val) => setSurveyForm((prev) => ({ ...prev, className: val }))}
+                          consentAgreed={surveyForm.consentAgreed}
+                          onConsentAgreedChange={(val) => setSurveyForm((prev) => ({ ...prev, consentAgreed: val }))}
+                          demographicGroup={surveyForm.demographicGroup}
+                          onDemographicGroupChange={(val) => setSurveyForm((prev) => ({ ...prev, demographicGroup: val }))}
+                          location={surveyForm.location}
+                          onLocationChange={(val) => setSurveyForm((prev) => ({ ...prev, location: val }))}
+                          pastLossOrNearMiss={surveyForm.pastLossOrNearMiss}
+                          onPastLossOrNearMissChange={(val) => setSurveyForm((prev) => ({ ...prev, pastLossOrNearMiss: val }))}
+                          experiencedSectors={surveyForm.experiencedSectors}
+                          onExperiencedSectorsChange={(val) => setSurveyForm((prev) => ({ ...prev, experiencedSectors: val }))}
+                          preConfidenceScore={surveyForm.preConfidenceScore}
+                          onPreConfidenceScoreChange={(val) => setSurveyForm((prev) => ({ ...prev, preConfidenceScore: val }))}
+                          idPrefix="analytics-survey"
+                        />
+
+                        {/* Step 1 Next Button */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800">
+                          <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                            <Lock className="w-3.5 h-3.5 text-cyan-400" />
+                            <span>
+                              {surveyForm.isAnonymous
+                                ? `Chế độ Ẩn danh: ${surveyForm.anonymousCode || 'Mã ngẫu nhiên'}`
+                                : `Đích danh: ${surveyForm.participantName || 'Chưa nhập'}`}{' '}
+                              • {surveyForm.schoolName || 'Chưa chọn trường'}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={
+                              (surveyForm.isAnonymous ? !surveyForm.anonymousCode?.trim() : !surveyForm.participantName?.trim()) ||
+                              !surveyForm.schoolName?.trim() ||
+                              !surveyForm.className?.trim() ||
+                              !surveyForm.consentAgreed
+                            }
+                            onClick={() => setSurveyStep(2)}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 disabled:opacity-50 text-white font-bold text-sm rounded-2xl shadow-xl shadow-indigo-500/30 transition-all transform hover:scale-[1.02] cursor-pointer"
+                          >
+                            Tiếp tục (Mục 2: 12 Bẫy Lừa Đảo Thực Tế) <ChevronRight className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* STEP 2: 12 HIGH-TRAP SCENARIOS (DYNAMIC FORMAT) */
+                      <div className="space-y-6">
+                        {/* Header Box with live counter */}
+                        <div className="p-4 bg-gradient-to-r from-indigo-950/70 via-purple-950/60 to-slate-900 border border-indigo-500/40 rounded-2xl shadow-lg space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 font-bold text-cyan-300 text-sm">
+                              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                              <span>MỤC 2/2: 12 KỊCH BẢN TÌNH HUỐNG LỪA ĐẢO NÂNG CAO (VISEF 2026)</span>
+                            </div>
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-indigo-200 text-xs font-mono font-bold self-start sm:self-auto">
+                              <span>Đã trả lời:</span>
+                              <span className={answeredTrapCount === totalTrapsCount ? 'text-cyan-300 font-bold' : 'text-amber-300 font-bold'}>
+                                {answeredTrapCount}/{totalTrapsCount} câu
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Progress bar */}
+                          <div className="w-full bg-slate-950/80 rounded-full h-2.5 overflow-hidden border border-indigo-500/20">
+                            <div
+                              className="h-full bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-400 transition-all duration-300"
+                              style={{ width: `${(answeredTrapCount / totalTrapsCount) * 100}%` }}
+                            />
+                          </div>
+
+                          {/* Quick Question Jump Chips */}
+                          <div className="pt-2 border-t border-indigo-500/20">
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="text-[11px] text-cyan-300 font-medium">Chọn nhanh câu hỏi:</span>
+                              {answeredTrapCount < totalTrapsCount && (
+                                <span className="text-[10px] text-amber-300 font-medium">
+                                  ⚠️ Cần chọn đủ tất cả {totalTrapsCount} câu trước khi nộp
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-1.5">
+                              {SCENARIO_QUESTIONS.map((q) => {
+                                const isAnswered = !!surveyForm.trapAnswers[q.key as keyof typeof surveyForm.trapAnswers];
+                                return (
+                                  <button
+                                    key={q.key}
+                                    type="button"
+                                    onClick={() => {
+                                      const el = document.getElementById(`suite-trap-scenario-${q.trapIndex}`);
+                                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }}
+                                    className={`py-1.5 px-2 rounded-lg text-xs font-bold font-mono transition-all flex items-center justify-center gap-1 cursor-pointer border ${
+                                      isAnswered
+                                        ? 'bg-indigo-950/70 border-indigo-500/50 text-cyan-300'
+                                        : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:border-indigo-400 hover:text-white'
+                                    }`}
+                                  >
+                                    <span>C{q.number}</span>
+                                    {isAnswered ? (
+                                      <Check className="w-3 h-3 text-cyan-400" />
+                                    ) : (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Validation warning banner */}
+                        {validationWarning && (
+                          <div className="p-3.5 bg-rose-950/80 border border-rose-500/80 rounded-xl text-rose-200 text-xs flex items-center gap-3 animate-bounce">
+                            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                            <div className="flex-1 font-semibold">{validationWarning}</div>
+                          </div>
+                        )}
+
+                        {/* 12 Dynamic Scenario Questions List */}
+                        <div className="space-y-4">
+                          {SCENARIO_QUESTIONS.map((q) => {
+                            const chosenVal = surveyForm.trapAnswers[q.key as keyof typeof surveyForm.trapAnswers];
+                            const isAnswered = !!chosenVal;
+
+                            return (
+                              <div
+                                key={q.key}
+                                id={`suite-trap-scenario-${q.trapIndex}`}
+                                className={`p-4 rounded-xl border transition-all space-y-3 ${
+                                  isAnswered
+                                    ? 'bg-slate-950 border-slate-800 focus-within:border-indigo-500'
+                                    : 'bg-slate-950 border-indigo-500/40 ring-1 ring-indigo-500/20'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                  <label className="text-cyan-300 font-bold text-xs flex items-center gap-2">
+                                    <span>Câu {q.number}: {q.title}</span>
+                                    <span className="text-rose-400">*</span>
+                                  </label>
+                                  <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${q.badgeColor}`}>
+                                    {q.badge}
+                                  </span>
+                                </div>
+                                <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-lg text-slate-300 font-mono text-[11px] leading-relaxed">
+                                  <span className="mr-1.5">{q.icon}</span>
+                                  <strong>{q.source}:</strong> "{q.content}"
+                                </div>
+                                <div className="space-y-2">
+                                  {q.options.map((opt) => (
+                                    <label
+                                      key={opt.id}
+                                      className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                                        chosenVal === opt.id
+                                          ? 'bg-indigo-950/70 border-indigo-400 text-white ring-1 ring-indigo-400/50'
+                                          : 'bg-slate-900/60 border-slate-800 hover:border-indigo-500/50 text-slate-200'
+                                      }`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={`suite_trap_${q.key}`}
+                                        checked={chosenVal === opt.id}
+                                        onChange={() =>
+                                          setSurveyForm({
+                                            ...surveyForm,
+                                            trapAnswers: { ...surveyForm.trapAnswers, [q.key]: opt.id },
+                                          })
+                                        }
+                                        className="mt-0.5 w-4 h-4 accent-indigo-500 shrink-0"
+                                      />
+                                      <span className="text-xs leading-normal">
+                                        <strong className="text-indigo-300 mr-1.5 font-mono">{opt.letter}.</strong>
+                                        {opt.text}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Optional Feedback */}
+                        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                          <label className="block text-slate-300 font-bold text-xs">
+                            Ghi chú bổ sung hoặc chia sẻ thêm trải nghiệm thực tế (Tùy chọn):
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="Nhập cảm nhận của bạn về độ tinh vi của các bẫy..."
+                            value={surveyForm.feedbackNote}
+                            onChange={(e) => setSurveyForm({ ...surveyForm, feedbackNote: e.target.value })}
+                            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500 text-xs resize-none"
+                          />
+                        </div>
+
+                        {/* Step 2 Form Footer Navigation */}
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                          <button
+                            type="button"
+                            onClick={() => setSurveyStep(1)}
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl cursor-pointer"
+                          >
+                            ← Quay lại Trang 1
+                          </button>
+
+                          <button
+                            id="btn-submit-survey-form"
+                            type="submit"
+                            disabled={submittingSurvey}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-500/25 cursor-pointer disabled:opacity-50"
+                          >
+                            {submittingSurvey ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
+                            Gửi Phiếu & Đẩy Dữ Liệu Lên Biểu Đồ ViSEF
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </form>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* SECTOR TOPIC 1 CERTIFICATION EXAM MODAL */}
       <SectorTopic1CertificationModal
